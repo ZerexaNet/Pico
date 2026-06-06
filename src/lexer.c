@@ -4,39 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// ── 中文标点 → ASCII 映射 ────────────────────────────────────
-// 返回替换后的 ASCII 字符（0 表示不替换）
-// 中文标点均为 3 字节 UTF-8
-static int cn_punct_to_ascii(const char *p, int *skip) {
-    unsigned char a = (unsigned char)p[0];
-    unsigned char b = (unsigned char)p[1];
-    unsigned char c = (unsigned char)p[2];
-    *skip = 3;
-    // ，U+FF0C  EF BC 8C
-    if (a==0xEF && b==0xBC && c==0x8C) return ',';
-    // ：U+FF1A  EF BC 9A
-    if (a==0xEF && b==0xBC && c==0x9A) return ':';
-    // （U+FF08  EF BC 88
-    if (a==0xEF && b==0xBC && c==0x88) return '(';
-    // ）U+FF09  EF BC 89
-    if (a==0xEF && b==0xBC && c==0x89) return ')';
-    // 【U+3010  E3 80 90
-    if (a==0xE3 && b==0x80 && c==0x90) return '[';
-    // 】U+3011  E3 80 91
-    if (a==0xE3 && b==0x80 && c==0x91) return ']';
-    // 。U+3002  E3 80 82
-    if (a==0xE3 && b==0x80 && c==0x82) return ';';
-    // " U+201C  E2 80 9C
-    if (a==0xE2 && b==0x80 && c==0x9C) return '"';
-    // " U+201D  E2 80 9D
-    if (a==0xE2 && b==0x80 && c==0x9D) return '"';
-    // 「U+300C  E3 80 8C
-    if (a==0xE3 && b==0x80 && c==0x8C) return '"';
-    // 」U+300D  E3 80 8D
-    if (a==0xE3 && b==0x80 && c==0x8D) return '"';
-    *skip = 0;
-    return 0;
-}
 
 // ── 关键字表 ─────────────────────────────────────────────────
 typedef struct { const char *word; PicoTokenType type; } KW;
@@ -244,27 +211,6 @@ retry:
     int start = l->pos;
     unsigned char c = (unsigned char)cur(l);
 
-    // 中文标点检测（3字节）
-    if (c >= 0x80 && l->src[l->pos+1] && l->src[l->pos+2]) {
-        int skip = 0;
-        int ascii = cn_punct_to_ascii(l->src + l->pos, &skip);
-        if (ascii) {
-            // 替换为对应 ASCII token
-            for (int i = 0; i < skip; i++) advance(l);
-            // 重新分发
-            // 直接构造 token
-            switch (ascii) {
-                case ',': return (Token){TOK_COMMA,    l->src+start, skip, line, col};
-                case ':': return (Token){TOK_COLON,    l->src+start, skip, line, col};
-                case '(': return (Token){TOK_LPAREN,   l->src+start, skip, line, col};
-                case ')': return (Token){TOK_RPAREN,   l->src+start, skip, line, col};
-                case '[': return (Token){TOK_LBRACKET, l->src+start, skip, line, col};
-                case ']': return (Token){TOK_RBRACKET, l->src+start, skip, line, col};
-                case ';': return (Token){TOK_SEMICOLON,l->src+start, skip, line, col};
-                case '"': return read_string(l, false);
-            }
-        }
-    }
 
     // 多字节标识符（中文等）
     if (c >= 0x80) return read_ident(l);
