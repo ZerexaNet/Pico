@@ -124,6 +124,13 @@ static Token read_string(Lexer *l, bool is_fstring) {
 static Token read_number(Lexer *l) {
     int start = l->pos, line = l->line, col = l->col;
     bool is_float = false;
+    if (cur(l) == '0' && (peek1(l) == 'x' || peek1(l) == 'X')) {
+        advance(l); advance(l); // skip 0x
+        while ((cur(l) >= '0' && cur(l) <= '9') ||
+               (cur(l) >= 'a' && cur(l) <= 'f') ||
+               (cur(l) >= 'A' && cur(l) <= 'F')) advance(l);
+        return make_tok(l, TOK_INT, start, line, col);
+    }
     while (cur(l) >= '0' && cur(l) <= '9') advance(l);
     if (cur(l) == '.' && peek1(l) != '.') {
         is_float = true;
@@ -236,8 +243,10 @@ retry:
         case '-': if(cur(l)=='='){advance(l);return(Token){TOK_MINUS_ASSIGN,l->src+start,2,line,col};}
                   if(cur(l)=='>'){advance(l);return(Token){TOK_THIN_ARROW,  l->src+start,2,line,col};}
                   return (Token){TOK_MINUS,   l->src+start,1,line,col};
-        case '*': return (Token){TOK_STAR,    l->src+start,1,line,col};
-        case '/': return (Token){TOK_SLASH,   l->src+start,1,line,col};
+        case '*': if(cur(l)=='='){advance(l);return(Token){TOK_STAR_ASSIGN, l->src+start,2,line,col};}
+                  return (Token){TOK_STAR,    l->src+start,1,line,col};
+        case '/': if(cur(l)=='='){advance(l);return(Token){TOK_SLASH_ASSIGN,l->src+start,2,line,col};}
+                  return (Token){TOK_SLASH,   l->src+start,1,line,col};
         case '%': return (Token){TOK_PERCENT, l->src+start,1,line,col};
         case '=': if(cur(l)=='='){advance(l);return(Token){TOK_EQ,  l->src+start,2,line,col};}
                   if(cur(l)=='>'){advance(l);return(Token){TOK_ARROW,l->src+start,2,line,col};}
@@ -245,15 +254,23 @@ retry:
         case '!': if(cur(l)=='='){advance(l);return(Token){TOK_NEQ, l->src+start,2,line,col};}
                   return err_tok(l,"expected !=");
         case '<': if(cur(l)=='='){advance(l);return(Token){TOK_LE,  l->src+start,2,line,col};}
+                  if(cur(l)=='<'){advance(l);return(Token){TOK_LSHIFT,l->src+start,2,line,col};}
                   return (Token){TOK_LT,      l->src+start,1,line,col};
-        case '>': if(cur(l)=='='){advance(l);return(Token){TOK_GE,  l->src+start,2,line,col};}
+        case '>': if(cur(l)=='='){advance(l);return(Token){TOK_GE,    l->src+start,2,line,col};}
+                  if(cur(l)=='>'){advance(l);return(Token){TOK_RSHIFT,l->src+start,2,line,col};}
                   return (Token){TOK_GT,      l->src+start,1,line,col};
         case '.': if(cur(l)=='.'){advance(l);return(Token){TOK_DOTDOT,l->src+start,2,line,col};}
                   return (Token){TOK_DOT,     l->src+start,1,line,col};
         case ',': return (Token){TOK_COMMA,   l->src+start,1,line,col};
         case ':': return (Token){TOK_COLON,   l->src+start,1,line,col};
         case ';': return (Token){TOK_SEMICOLON,l->src+start,1,line,col};
-        case '|': return (Token){TOK_PIPE,    l->src+start,1,line,col};
+        case '|': if(cur(l)=='='){advance(l);return(Token){TOK_PIPE_ASSIGN, l->src+start,2,line,col};}
+                  return (Token){TOK_PIPE,    l->src+start,1,line,col};
+        case '&': if(cur(l)=='='){advance(l);return(Token){TOK_AMP_ASSIGN,  l->src+start,2,line,col};}
+                  return (Token){TOK_AMP,     l->src+start,1,line,col};
+        case '^': if(cur(l)=='='){advance(l);return(Token){TOK_CARET_ASSIGN,l->src+start,2,line,col};}
+                  return (Token){TOK_CARET,   l->src+start,1,line,col};
+        case '~': return (Token){TOK_TILDE,   l->src+start,1,line,col};
         case '(': return (Token){TOK_LPAREN,  l->src+start,1,line,col};
         case ')': return (Token){TOK_RPAREN,  l->src+start,1,line,col};
         case '{': return (Token){TOK_LBRACE,  l->src+start,1,line,col};

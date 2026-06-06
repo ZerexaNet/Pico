@@ -17,10 +17,16 @@ typedef enum {
     TOK_PLUS, TOK_MINUS, TOK_STAR, TOK_SLASH, TOK_PERCENT,
     TOK_EQ, TOK_NEQ, TOK_LT, TOK_LE, TOK_GT, TOK_GE,
     TOK_ASSIGN, TOK_PLUS_ASSIGN, TOK_MINUS_ASSIGN,
+    TOK_STAR_ASSIGN, TOK_SLASH_ASSIGN, TOK_AMP_ASSIGN, TOK_PIPE_ASSIGN, TOK_CARET_ASSIGN,
     TOK_DOTDOT,       // ..  范围
     TOK_ARROW,        // =>  match 分支
     TOK_THIN_ARROW,   // ->  返回类型标注
     TOK_DOT, TOK_COMMA, TOK_COLON, TOK_SEMICOLON, TOK_PIPE,
+    TOK_AMP,          // &  位与
+    TOK_CARET,        // ^  位异或
+    TOK_TILDE,        // ~  位非
+    TOK_LSHIFT,       // << 左移
+    TOK_RSHIFT,       // >> 右移
     TOK_LPAREN, TOK_RPAREN,
     TOK_LBRACE, TOK_RBRACE,
     TOK_LBRACKET, TOK_RBRACKET,

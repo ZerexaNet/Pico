@@ -128,7 +128,7 @@ static void parse_params(Parser *p, char ***params, int *count) {
 // ── 表达式（Pratt 解析）──────────────────────────────────────
 static int prefix_bp(PicoTokenType t) {
     switch (t) {
-        case TOK_MINUS: case TOK_NOT: return 70;
+        case TOK_MINUS: case TOK_NOT: case TOK_TILDE: return 70;
         default: return -1;
     }
 }
@@ -140,6 +140,10 @@ static int infix_bp(PicoTokenType t) {
         case TOK_EQ: case TOK_NEQ:
         case TOK_LT: case TOK_LE: case TOK_GT: case TOK_GE: return 30;
         case TOK_DOTDOT: return 35;
+        case TOK_PIPE:   return 36;  // bitwise |
+        case TOK_CARET:  return 37;  // bitwise ^
+        case TOK_AMP:    return 38;  // bitwise &
+        case TOK_LSHIFT: case TOK_RSHIFT: return 39;
         case TOK_PLUS: case TOK_MINUS: return 40;
         case TOK_STAR: case TOK_SLASH: case TOK_PERCENT: return 50;
         case TOK_DOT: case TOK_LBRACKET: case TOK_LPAREN: return 80;
@@ -154,7 +158,7 @@ static AstNode *parse_primary(Parser *p) {
     switch (t.type) {
         case TOK_INT: {
             n = new_node(p, NODE_INT);
-            n->ival = strtoll(t.start, NULL, 10);
+            n->ival = strtoll(t.start, NULL, 0);
             advance(p); return n;
         }
         case TOK_FLOAT: {

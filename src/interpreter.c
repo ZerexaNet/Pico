@@ -17,6 +17,9 @@
 ObjMap *stdlib_str_module(void);
 ObjMap *stdlib_file_module(void);
 ObjMap *stdlib_maplib_module(void);
+ObjMap *stdlib_mem_module(void);
+ObjMap *stdlib_sys_module(void);
+ObjMap *stdlib_ffi_module(void);
 
 static Interpreter *current_vm = NULL;
 
@@ -228,6 +231,11 @@ Value interp_exec(Interpreter *vm, AstNode *node, Env *env) {
             case TOK_LE:  return VAL_BOOL_V(a <= b);
             case TOK_GT:  return VAL_BOOL_V(a > b);
             case TOK_GE:  return VAL_BOOL_V(a >= b);
+            case TOK_AMP:    return VAL_INT_V(a & b);
+            case TOK_PIPE:   return VAL_INT_V(a | b);
+            case TOK_CARET:  return VAL_INT_V(a ^ b);
+            case TOK_LSHIFT: return VAL_INT_V(a << b);
+            case TOK_RSHIFT: return VAL_INT_V(a >> b);
             default: break;
             }
         }
@@ -256,6 +264,9 @@ Value interp_exec(Interpreter *vm, AstNode *node, Env *env) {
         if (node->unop.op == TOK_MINUS) {
             if (IS_INT(v))   return VAL_INT_V(-v.integer);
             if (IS_FLOAT(v)) return VAL_FLOAT_V(-v.floating);
+        }
+        if (node->unop.op == TOK_TILDE) {
+            if (IS_INT(v)) return VAL_INT_V(~v.integer);
         }
         if (node->unop.op == TOK_NOT) return VAL_BOOL_V(!IS_TRUTHY(v));
         set_error(vm, "invalid unary op");
@@ -745,6 +756,18 @@ void interp_register_stdlib(Interpreter *vm) {
     ObjMap *map_mod = stdlib_maplib_module();
     env_set(vm->globals, str_intern("maplib",   6), VAL_MAP_V(map_mod));
     env_set(vm->globals, str_intern("字典模块", 12), VAL_MAP_V(map_mod));
+
+    // mem module
+    ObjMap *mem_mod = stdlib_mem_module();
+    env_set(vm->globals, str_intern("mem", 3), VAL_MAP_V(mem_mod));
+
+    // sys module
+    ObjMap *sys_mod = stdlib_sys_module();
+    env_set(vm->globals, str_intern("sys", 3), VAL_MAP_V(sys_mod));
+
+    // ffi module
+    ObjMap *ffi_mod = stdlib_ffi_module();
+    env_set(vm->globals, str_intern("ffi", 3), VAL_MAP_V(ffi_mod));
 }
 
 Value interp_run_string(const char *src, const char *filename) {
