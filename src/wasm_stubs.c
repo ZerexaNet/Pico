@@ -39,4 +39,9 @@ Value qt_widget_on_click(int argc, Value *argv){ (void)argc;(void)argv; return V
 #include "value.h"
 ObjMap *stdlib_file_module(void) { return map_new(); }
 
+/* mem / sys / ffi — not available in WASM */
+ObjMap *stdlib_mem_module(void) { return map_new(); }
+ObjMap *stdlib_sys_module(void) { return map_new(); }
+ObjMap *stdlib_ffi_module(void) { return map_new(); }
+
 #endif /* __EMSCRIPTEN__ */
